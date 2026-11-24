@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello Sunshine Goa (Vue 3 Edition) | Boutique Cafe & Bakery</title>
+  
+  <meta name="description" content="Hello Sunshine Goa - Vue 3 Edition. Premium boutique cafe in Anjuna, Goa.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/styles.css">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: { 50: '#FAF7F0', 100: '#F6F1E6', 200: '#EFE7D6', card: '#FFFFFF', subtle: '#F3ECE1' },
+            olive: { 900: '#1D281D', 800: '#253325', 700: '#3F523D', 600: '#536B50', 100: '#EBF0EA' },
+            gold: { 400: '#E6C387', 500: '#DEB36D', 600: '#C59A58', 700: '#AF8341' },
+            coffee: { 950: '#150E09', 900: '#231811', 800: '#36251B', 700: '#50382B', 600: '#85583B' }
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'Georgia', 'serif'],
+            sans: ['DM Sans', 'sans-serif'],
+            script: ['Alex Brush', 'cursive', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Vue 3 Production CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <!-- Supabase JS Client v2 CDN & Backend Connectors -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabaseConfig.js"></script>
+  <script src="../js/supabaseClient.js"></script>
+</head>
+<body class="bg-cream-50 text-coffee-900 font-sans selection:bg-gold-500 selection:text-coffee-950">
+
+  <div id="vue-root" v-cloak class="min-h-screen flex flex-col relative">
+
+    <!-- Top Announcement Bar -->
+    <aside class="bg-coffee-950 text-gold-400 text-xs py-2 px-4 text-center border-b border-gold-600/20 font-medium flex items-center justify-center gap-3">
+      <span class="inline-flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-gold-500"></i> Anjuna Mapusa Road, Bouta Waddo, Goa</span>
+      <span class="text-gold-600/40">•</span>
+      <a href="tel:+917887998957" class="hover:text-white underline decoration-gold-600/40 underline-offset-2 flex items-center gap-1">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i> +91 78879 98957
+      </a>
+    </aside>
+
+    <!-- Navigation -->
+    <header :class="['sticky top-0 z-40 transition-all duration-300', isScrolled ? 'glass-nav shadow-soft py-3' : 'bg-coffee-950/90 text-white backdrop-blur-md py-4 border-b border-white/10']">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <a href="#home" class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full border border-gold-500/60 flex items-center justify-center bg-coffee-900 text-gold-400">
+            <i data-lucide="sun" class="w-5 h-5 text-gold-500"></i>
+          </div>
+          <div>
+            <span :class="['font-serif tracking-widest text-lg sm:text-xl font-bold uppercase', isScrolled ? 'text-coffee-900' : 'text-white']">
+              Hello Sunshine
+            </span>
+            <span class="block text-[10px] tracking-[0.25em] uppercase text-gold-500 font-medium">Vue 3 Edition • Goa</span>
+          </div>
+        </a>
+
+        <nav class="hidden lg:flex items-center space-x-7 text-xs font-semibold uppercase tracking-widest">
+          <a href="#home" class="hover:text-gold-600">Home</a>
+          <a href="#about" class="hover:text-gold-600">About</a>
+          <a href="#bestsellers" class="hover:text-gold-600">Best Sellers</a>
+          <a href="#menu" class="hover:text-gold-600">Menu</a>
+          <a href="#reviews" class="hover:text-gold-600">Reviews</a>
+          <a href="#location" class="hover:text-gold-600">Location</a>
+        </nav>
+
+        <a href="#reservations" class="btn-gold text-xs py-2.5 px-5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+          <span>Reserve Table</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section id="home" class="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-coffee-950 text-white">
+      <div class="absolute inset-0 z-0">
+        <img src="../reference_hero.jpg" alt="Artisanal cafe" class="w-full h-full object-cover filter brightness-[0.62] contrast-[1.08]" />
+        <div class="absolute inset-0 bg-gradient-to-t from-coffee-950 via-coffee-950/50 to-transparent"></div>
+      </div>
+
+      <div class="relative z-10 max-w-5xl mx-auto px-4 py-20 text-center flex flex-col items-center">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-gold-500/30 text-gold-400 text-xs tracking-[0.25em] uppercase font-bold mb-5">
+          BOUTIQUE CAFE & BAKERY • ANJUNA, GOA
+        </div>
+
+        <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-extrabold text-cream-50 leading-tight">
+          A Little Sunshine <br />
+          <span class="font-script text-gold-500 font-normal text-5xl sm:text-7xl md:text-8xl inline-block mt-2">in Anjuna.</span>
+        </h1>
+
+        <p class="mt-6 text-base sm:text-xl text-stone-200/90 font-light max-w-2xl">
+          Good food. Great coffee. Sunshine-filled moments.
+        </p>
+
+        <div class="mt-10 flex gap-4">
+          <a href="#menu" class="btn-gold"><i data-lucide="utensils" class="w-4 h-4"></i> Explore Menu</a>
+          <a href="#location" class="btn-outline-gold"><i data-lucide="map-pin" class="w-4 h-4"></i> Find Us</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Best Sellers -->
+    <section id="bestsellers" class="py-24 bg-cream-subtle/60">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="text-xs font-bold uppercase tracking-widest text-gold-700 bg-gold-500/10 px-4 py-1.5 rounded-full">Signatures</span>
+          <h2 class="font-serif text-3xl sm:text-5xl font-bold text-coffee-950 mt-2">Best Sellers at Hello Sunshine</h2>
+          <p class="text-xs text-coffee-600 mt-2">*Prices are indicative and subject to seasonal verification.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div v-for="item in bestSellers" :key="item.id" class="food-card flex flex-col justify-between">
+            <div class="h-56 overflow-hidden">
+              <img :src="item.image" :alt="item.name" class="food-img w-full h-full object-cover" />
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-bold text-gold-700 uppercase">{{ item.badge }}</span>
+                <span class="font-serif font-bold text-coffee-950">{{ item.priceDisplay }}</span>
+              </div>
+              <h3 class="font-serif text-lg font-bold text-coffee-950">{{ item.name }}</h3>
+              <p class="mt-2 text-xs text-coffee-700">{{ item.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section id="menu" class="py-24 bg-cream-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+          <h2 class="font-serif text-3xl sm:text-5xl font-bold text-coffee-950">Searchable Menu</h2>
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Search coffee, tacos, croissant..." 
+            class="mt-4 w-full px-4 py-2.5 rounded-full border border-coffee-900/15 text-xs bg-white" />
+        </div>
+
+        <div class="flex gap-2 overflow-x-auto pb-4 mb-8">
+          <button 
+            v-for="cat in menuCategories" 
+            :key="cat"
+            @click="selectedCategory = cat"
+            :class="['whitespace-nowrap px-4 py-2 rounded-full text-xs uppercase', selectedCategory === cat ? 'bg-gold-600 text-coffee-950 font-bold' : 'bg-white text-coffee-800 border']">
+            {{ cat }}
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div v-for="dish in filteredMenu" :key="dish.id" class="food-card p-5">
+            <div class="flex justify-between text-xs text-gold-700 font-bold mb-1">
+              <span>{{ dish.category }}</span>
+              <span>{{ dish.priceDisplay }}</span>
+            </div>
+            <h3 class="font-serif text-base font-bold text-coffee-950">{{ dish.name }}</h3>
+            <p class="mt-1 text-xs text-coffee-700">{{ dish.description }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Location & Contact -->
+    <section id="location" class="py-24 bg-cream-subtle/70 text-center">
+      <div class="max-w-4xl mx-auto px-4">
+        <h2 class="font-serif text-3xl font-bold text-coffee-950">Visit Hello Sunshine Goa</h2>
+        <p class="text-xs text-coffee-700 mt-2">Anjuna Mapusa Road, Bouta Waddo, Anjuna, Goa 403510</p>
+        <p class="text-xs text-coffee-700 mt-1">Phone: <a href="tel:+917887998957" class="font-bold underline">+91 78879 98957</a></p>
+        <div class="mt-6 flex justify-center gap-3">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=Hello+Sunshine+Anjuna+Mapusa+Road+Bouta+Waddo+Anjuna+Goa+403510" target="_blank" rel="noopener noreferrer" class="btn-gold text-xs py-2.5 px-6">
+            Get Directions
+          </a>
+          <a href="tel:+917887998957" class="btn-olive text-xs py-2.5 px-6">
+            Call +91 78879 98957
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-coffee-950 text-white py-12 text-center text-xs">
+      <p class="font-serif text-lg font-bold">Hello Sunshine Goa</p>
+      <p class="text-stone-400 mt-1">4.4 Stars (287 Google Reviews) • Anjuna, Goa</p>
+      <div class="mt-4 text-stone-500">
+        <a href="../index.html" class="text-gold-500 hover:underline">Flagship Edition</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module">
+    import { CAFE_INFO, BEST_SELLERS, FULL_MENU, MENU_CATEGORIES } from '../data/cafeData.js';
+
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const isScrolled = ref(false);
+        const searchQuery = ref('');
+        const selectedCategory = ref('All Categories');
+        const bestSellers = ref(BEST_SELLERS);
+        const menuCategories = ref(MENU_CATEGORIES);
+
+        const filteredMenu = computed(() => {
+          return FULL_MENU.filter(item => {
+            const matchCat = selectedCategory.value === 'All Categories' || item.category === selectedCategory.value;
+            const matchSearch = !searchQuery.value.trim() || item.name.toLowerCase().includes(searchQuery.value.toLowerCase());
+            return matchCat && matchSearch;
+          });
+        });
+
+        onMounted(() => {
+          window.addEventListener('scroll', () => {
+            isScrolled.value = window.scrollY > 40;
+          });
+          if (window.lucide) window.lucide.createIcons();
+        });
+
+        return {
+          isScrolled,
+          searchQuery,
+          selectedCategory,
+          bestSellers,
+          menuCategories,
+          filteredMenu
+        };
+      }
+    }).mount('#vue-root');
+  </script>
+</body>
+</html>

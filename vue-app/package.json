@@ -1,0 +1,23 @@
+{
+  "name": "hello-sunshine-goa-vue",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hello Sunshine Goa - Vue 3 Edition. Premium Boutique Cafe & Bakery in Anjuna, Goa.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.27",
+    "lucide-vue-next": "^0.383.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.11"
+  }
+}

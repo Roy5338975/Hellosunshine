@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello Sunshine Goa (React Edition) | Boutique Cafe & Bakery</title>
+  
+  <meta name="description" content="Hello Sunshine Goa - React Edition. Premium boutique cafe in Anjuna, Goa.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/styles.css">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: { 50: '#FAF7F0', 100: '#F6F1E6', 200: '#EFE7D6', card: '#FFFFFF', subtle: '#F3ECE1' },
+            olive: { 900: '#1D281D', 800: '#253325', 700: '#3F523D', 600: '#536B50', 100: '#EBF0EA' },
+            gold: { 400: '#E6C387', 500: '#DEB36D', 600: '#C59A58', 700: '#AF8341' },
+            coffee: { 950: '#150E09', 900: '#231811', 800: '#36251B', 700: '#50382B', 600: '#85583B' }
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'Georgia', 'serif'],
+            sans: ['DM Sans', 'sans-serif'],
+            script: ['Alex Brush', 'cursive', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- React 18 & ReactDOM via CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Supabase JS Client v2 CDN & Backend Connectors -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabaseConfig.js"></script>
+  <script src="../js/supabaseClient.js"></script>
+
+  <!-- Babel Standalone to compile JSX in-browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-cream-50 text-coffee-900 font-sans selection:bg-gold-500 selection:text-coffee-950">
+  
+  <div id="react-root"></div>
+
+  <script type="text/babel" data-type="module">
+    import { CAFE_INFO, BEST_SELLERS, FULL_MENU, MENU_CATEGORIES, GALLERY_IMAGES, GOOGLE_REVIEWS_INFO } from '../data/cafeData.js';
+
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    function App() {
+      const [isScrolled, setIsScrolled] = useState(false);
+      const [mobileNavOpen, setMobileNavOpen] = useState(false);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('All Categories');
+      const [selectedDietary, setSelectedDietary] = useState('All');
+      const [selectedGalleryCategory, setSelectedGalleryCategory] = useState('All');
+      const [orderItems, setOrderItems] = useState([]);
+      const [isOrderDrawerOpen, setIsOrderDrawerOpen] = useState(false);
+      
+      // Lightbox
+      const [lightboxOpen, setLightboxOpen] = useState(false);
+      const [lightboxIndex, setLightboxIndex] = useState(0);
+
+      // Reservation Form
+      const minDate = new Date().toISOString().split('T')[0];
+      const [reservationSubmitted, setReservationSubmitted] = useState(false);
+      const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        date: minDate,
+        time: '11:00 AM (Brunch)',
+        guests: '2 Guests',
+        seating: 'Breezy Rooftop Deck',
+        notes: ''
+      });
+
+      useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 40);
+        window.addEventListener('scroll', handleScroll);
+        if (window.lucide) window.lucide.createIcons();
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      useEffect(() => {
+        if (window.lucide) window.lucide.createIcons();
+      }, [selectedCategory, selectedDietary, searchQuery, selectedGalleryCategory, orderItems, isOrderDrawerOpen, lightboxOpen, reservationSubmitted, mobileNavOpen]);
+
+      // Filtered Menu
+      const filteredMenu = useMemo(() => {
+        return FULL_MENU.filter(item => {
+          const matchCat = selectedCategory === 'All Categories' || item.category === selectedCategory;
+          const matchDiet = selectedDietary === 'All' || item.dietary.some(d => d.toLowerCase().includes(selectedDietary.toLowerCase()));
+          const matchSearch = !searchQuery.trim() ||
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.cuisine.toLowerCase().includes(searchQuery.toLowerCase());
+          return matchCat && matchDiet && matchSearch;
+        });
+      }, [selectedCategory, selectedDietary, searchQuery]);
+
+      // Filtered Gallery
+      const filteredGallery = useMemo(() => {
+        if (selectedGalleryCategory === 'All') return GALLERY_IMAGES;
+        return GALLERY_IMAGES.filter(p => p.category === selectedGalleryCategory);
+      }, [selectedGalleryCategory]);
+
+      // Estimated total
+      const estimatedTotal = useMemo(() => {
+        return orderItems.reduce((acc, curr) => acc + (curr.price || 0), 0);
+      }, [orderItems]);
+
+      const addToOrder = (item) => {
+        setOrderItems(prev => [...prev, item]);
+        setIsOrderDrawerOpen(true);
+      };
+
+      const removeFromOrder = (idx) => {
+        setOrderItems(prev => prev.filter((_, i) => i !== idx));
+      };
+
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const [submitError, setSubmitError] = useState('');
+
+      const handleReservation = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setSubmitError('');
+        try {
+          if (window.CafeSupabase) {
+            await window.CafeSupabase.saveReservation(formData);
+          }
+          setReservationSubmitted(true);
+        } catch (err) {
+          console.error('Reservation error:', err);
+          setSubmitError(err.message || 'Failed to submit. Please try again.');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+
+      const whatsappReserveUrl = useMemo(() => {
+        const text = encodeURIComponent(
+          `Hello Hello Sunshine Goa! ☀️ (React App)\nReservation Request:\n• Name: ${formData.name}\n• Phone: ${formData.phone}\n• Date: ${formData.date}\n• Time: ${formData.time}\n• Guests: ${formData.guests}\n• Seating: ${formData.seating}\n• Notes: ${formData.notes || 'None'}`
+        );
+        return `https://wa.me/917887998957?text=${text}`;
+      }, [formData]);
+
+      const whatsappOrderUrl = useMemo(() => {
+        const list = orderItems.map(i => `- ${i.name} (${i.priceDisplay})`).join('\n');
+        const text = encodeURIComponent(
+          `Hello Hello Sunshine Goa! ☀️\nOrder Inquiry (React App):\n${list}\nEstimated Total: ₹${estimatedTotal}`
+        );
+        return `https://wa.me/917887998957?text=${text}`;
+      }, [orderItems, estimatedTotal]);
+
+      return (
+        <div className="min-h-screen flex flex-col relative">
+          
+          {/* Top Announcement Bar */}
+          <aside className="bg-coffee-950 text-gold-400 text-xs py-2 px-4 text-center border-b border-gold-600/20 font-medium flex items-center justify-center gap-3">
+            <span className="flex items-center gap-1.5"><i data-lucide="map-pin" className="w-3.5 h-3.5 text-gold-500"></i> Anjuna Mapusa Road, Bouta Waddo, Goa</span>
+            <span className="hidden md:inline text-gold-600/40">•</span>
+            <span className="hidden md:inline-flex items-center gap-1.5"><i data-lucide="clock" className="w-3.5 h-3.5 text-gold-500"></i> Daily 8:00 AM – 10:30 PM</span>
+            <span className="text-gold-600/40">•</span>
+            <a href="tel:+917887998957" className="hover:text-white underline decoration-gold-600/40 underline-offset-2 flex items-center gap-1">
+              <i data-lucide="phone" className="w-3.5 h-3.5"></i> +91 78879 98957
+            </a>
+          </aside>
+
+          {/* Navigation */}
+          <header className={`sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'glass-nav shadow-soft py-3' : 'bg-coffee-950/90 text-white backdrop-blur-md py-4 border-b border-white/10'}`}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+              
+              <a href="#home" className="flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-full border border-gold-500/60 flex items-center justify-center bg-coffee-900 text-gold-400 shadow-sm">
+                  <i data-lucide="sun" className="w-5 h-5 text-gold-500"></i>
+                </div>
+                <div>
+                  <span className={`font-serif tracking-widest text-lg sm:text-xl font-bold uppercase ${isScrolled ? 'text-coffee-900' : 'text-white'}`}>
+                    Hello Sunshine
+                  </span>
+                  <span className="block text-[10px] tracking-[0.25em] uppercase font-sans text-gold-500 font-medium">React Edition • Goa</span>
+                </div>
+              </a>
+
+              <nav className="hidden lg:flex items-center space-x-7 text-xs font-semibold uppercase tracking-widest">
+                <a href="#home" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Home</a>
+                <a href="#about" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>About</a>
+                <a href="#bestsellers" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Best Sellers</a>
+                <a href="#menu" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Menu</a>
+                <a href="#gallery" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Gallery</a>
+                <a href="#reviews" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Reviews</a>
+                <a href="#location" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Location</a>
+                <a href="#contact" className={`hover:text-gold-600 ${isScrolled ? 'text-coffee-900' : 'text-stone-200'}`}>Contact</a>
+              </nav>
+
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsOrderDrawerOpen(true)}
+                  className={`relative p-2.5 rounded-full ${isScrolled ? 'text-coffee-900 hover:bg-gold-500/10' : 'text-white hover:bg-white/10'}`}>
+                  <i data-lucide="shopping-bag" className="w-5 h-5"></i>
+                  {orderItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gold-600 text-coffee-950 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {orderItems.length}
+                    </span>
+                  )}
+                </button>
+
+                <a href="#reservations" className="hidden sm:inline-flex btn-gold text-xs py-2.5 px-5">
+                  <i data-lucide="calendar" className="w-3.5 h-3.5"></i>
+                  <span>Reserve Table</span>
+                </a>
+
+                <button 
+                  onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                  className={`lg:hidden p-2 rounded-lg ${isScrolled ? 'text-coffee-900' : 'text-white'}`}>
+                  <i data-lucide={mobileNavOpen ? 'x' : 'menu'} className="w-6 h-6"></i>
+                </button>
+              </div>
+
+            </div>
+
+            {mobileNavOpen && (
+              <div className="lg:hidden bg-cream-50 text-coffee-900 border-b border-gold-600/30 px-6 py-5 shadow-card">
+                <div className="flex flex-col space-y-3 font-semibold text-sm uppercase">
+                  <a href="#home" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">Home</a>
+                  <a href="#about" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">About</a>
+                  <a href="#bestsellers" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">Best Sellers</a>
+                  <a href="#menu" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">Menu</a>
+                  <a href="#gallery" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">Gallery</a>
+                  <a href="#reviews" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">Reviews (4.4★)</a>
+                  <a href="#location" onClick={() => setMobileNavOpen(false)} className="py-2 border-b border-coffee-900/5">Location</a>
+                </div>
+              </div>
+            )}
+          </header>
+
+          {/* Hero Section */}
+          <section id="home" className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-coffee-950 text-white">
+            <div className="absolute inset-0 z-0">
+              <img src="../reference_hero.jpg" alt="Artisanal cafe" className="w-full h-full object-cover filter brightness-[0.62] contrast-[1.08]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-coffee-950 via-coffee-950/50 to-transparent"></div>
+            </div>
+
+            <div className="relative z-10 max-w-5xl mx-auto px-4 py-20 text-center flex flex-col items-center">
+              <div className="mb-6">
+                <div className="stamp-seal">
+                  <span className="text-[10px] font-bold text-gold-400">4.4★ GOA</span>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-gold-500/30 text-gold-400 text-xs tracking-[0.25em] uppercase font-bold mb-5">
+                BOUTIQUE CAFE & BAKERY • ANJUNA, GOA
+              </div>
+
+              <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-extrabold text-cream-50 leading-tight">
+                A Little Sunshine <br />
+                <span className="font-script text-gold-500 font-normal text-5xl sm:text-7xl md:text-8xl inline-block mt-2">in Anjuna.</span>
+              </h1>
+
+              <p className="mt-6 text-base sm:text-xl text-stone-200/90 font-light max-w-2xl">
+                Good food. Great coffee. Sunshine-filled moments.
+              </p>
+
+              <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                <a href="#menu" className="btn-gold"><i data-lucide="utensils" className="w-4 h-4"></i> Explore Menu</a>
+                <a href="#location" className="btn-outline-gold"><i data-lucide="map-pin" className="w-4 h-4"></i> Find Us</a>
+              </div>
+            </div>
+          </section>
+
+          {/* About Section */}
+          <section id="about" className="py-24 bg-cream-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div className="lg:col-span-6">
+                  <div className="rounded-3xl overflow-hidden shadow-card border border-gold-600/20">
+                    <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80" alt="Garden patio" className="w-full h-80 object-cover" />
+                  </div>
+                </div>
+                <div className="lg:col-span-6 space-y-6">
+                  <span className="text-xs font-bold uppercase tracking-wider text-olive-800 bg-olive-100 px-3.5 py-1 rounded-full">About Hello Sunshine</span>
+                  <h2 className="font-serif text-3xl sm:text-5xl font-bold text-coffee-950">A Relaxed Cafe Experience in Anjuna</h2>
+                  <p className="text-coffee-800 text-base leading-relaxed">
+                    Located on Anjuna Mapusa Road in Bouta Waddo, Hello Sunshine is a warm, boutique cafe celebrating continental favorites, nutritious smoothie bowls, breakfast tacos, and specialty coffee.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="p-3 bg-white rounded-xl border border-coffee-900/10">
+                      <h4 className="font-bold text-xs text-coffee-950">Women-Owned</h4>
+                      <p className="text-[11px] text-coffee-600">Proudly independent</p>
+                    </div>
+                    <div className="p-3 bg-white rounded-xl border border-coffee-900/10">
+                      <h4 className="font-bold text-xs text-coffee-950">Rooftop & Garden</h4>
+                      <p className="text-[11px] text-coffee-600">Breezy Anjuna seating</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Best Sellers */}
+          <section id="bestsellers" className="py-24 bg-cream-subtle/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="text-xs font-bold uppercase tracking-widest text-gold-700 bg-gold-500/10 px-4 py-1.5 rounded-full">Signatures</span>
+                <h2 className="font-serif text-3xl sm:text-5xl font-bold text-coffee-950 mt-2">Best Sellers at Hello Sunshine</h2>
+                <p className="text-xs text-coffee-600 mt-2">*Prices are indicative and subject to seasonal verification.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {BEST_SELLERS.map(item => (
+                  <div key={item.id} className="food-card flex flex-col justify-between">
+                    <div className="h-56 overflow-hidden">
+                      <img src={item.image} alt={item.name} className="food-img w-full h-full object-cover" />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] font-bold text-gold-700 uppercase">{item.badge}</span>
+                        <span className="font-serif font-bold text-coffee-950">{item.priceDisplay}</span>
+                      </div>
+                      <h3 className="font-serif text-lg font-bold text-coffee-950">{item.name}</h3>
+                      <p className="mt-2 text-xs text-coffee-700">{item.description}</p>
+                      <button onClick={() => addToOrder(item)} className="mt-4 w-full btn-olive text-xs py-2">
+                        + Add to Order Note
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Menu */}
+          <section id="menu" className="py-24 bg-cream-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-2xl mx-auto mb-10">
+                <h2 className="font-serif text-3xl sm:text-5xl font-bold text-coffee-950">Filterable Menu</h2>
+                <div className="mt-4 flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Search menu..." 
+                    value={searchQuery} 
+                    onChange={e => setSearchQuery(e.target.value)} 
+                    className="w-full px-4 py-2 rounded-full border border-coffee-900/15 text-xs" />
+                </div>
+              </div>
+
+              {/* Category tabs */}
+              <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
+                {MENU_CATEGORIES.map(cat => (
+                  <button 
+                    key={cat} 
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-xs uppercase ${selectedCategory === cat ? 'bg-gold-600 text-coffee-950 font-bold' : 'bg-white text-coffee-800'}`}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {filteredMenu.map(dish => (
+                  <div key={dish.id} className="food-card p-5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between text-xs text-gold-700 font-bold mb-1">
+                        <span>{dish.category}</span>
+                        <span>{dish.priceDisplay}</span>
+                      </div>
+                      <h3 className="font-serif text-base font-bold text-coffee-950">{dish.name}</h3>
+                      <p className="mt-1 text-xs text-coffee-700">{dish.description}</p>
+                    </div>
+                    <button onClick={() => addToOrder(dish)} className="mt-4 text-xs font-bold text-coffee-900 hover:text-gold-700 text-left">
+                      + Add to Note
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Reviews */}
+          <section id="reviews" className="py-24 bg-coffee-950 text-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <span className="text-gold-400 font-serif text-6xl font-bold block">4.4 ★</span>
+              <p className="text-sm text-stone-300 mt-2">287 Verified Google Reviews • Anjuna, Goa</p>
+              <div className="mt-6">
+                <a href="https://www.google.com/maps/search/?api=1&query=Hello+Sunshine+Anjuna+Mapusa+Road+Bouta+Waddo+Anjuna+Goa+403510" target="_blank" rel="noopener noreferrer" className="btn-gold text-xs py-3 px-6">
+                  Read on Google Maps
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* Reservations */}
+          <section id="reservations" className="py-24 bg-cream-subtle/70">
+            <div className="max-w-2xl mx-auto px-4">
+              <div className="bg-white p-8 rounded-3xl shadow-card border border-gold-600/30">
+                <h2 className="font-serif text-2xl font-bold text-coffee-950 text-center mb-2">Table Reservation Request</h2>
+                <p className="text-xs text-coffee-600 text-center mb-6">Confirmed directly by our cafe host at +91 78879 98957.</p>
+
+                {reservationSubmitted ? (
+                  <div className="p-4 bg-olive-100 rounded-xl text-olive-900 text-xs">
+                    <p className="font-bold">Reservation Request Sent!</p>
+                    <p className="mt-1">Thank you {formData.name}. Our team will contact you shortly.</p>
+                    <a href={whatsappReserveUrl} target="_blank" rel="noopener noreferrer" className="btn-olive text-xs py-2 px-4 mt-3 inline-block">
+                      Verify via WhatsApp
+                    </a>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReservation} className="space-y-4 text-xs">
+                    <div>
+                      <label className="font-bold block mb-1">Full Name</label>
+                      <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 rounded-lg border bg-cream-50" />
+                    </div>
+                    <div>
+                      <label className="font-bold block mb-1">Phone</label>
+                      <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-2.5 rounded-lg border bg-cream-50" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-bold block mb-1">Date</label>
+                        <input type="date" required value={formData.date} min={minDate} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full p-2.5 rounded-lg border bg-cream-50" />
+                      </div>
+                      <div>
+                        <label className="font-bold block mb-1">Guests</label>
+                        <select value={formData.guests} onChange={e => setFormData({...formData, guests: e.target.value})} className="w-full p-2.5 rounded-lg border bg-cream-50">
+                          <option>1 Guest</option>
+                          <option>2 Guests</option>
+                          <option>3-4 Guests</option>
+                          <option>5+ Guests</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-gold w-full py-3">Submit Request</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Location */}
+          <section id="location" className="py-24 bg-cream-50">
+            <div className="max-w-7xl mx-auto px-4 text-center">
+              <h2 className="font-serif text-3xl font-bold text-coffee-950">Location & Hours</h2>
+              <p className="text-xs text-coffee-700 mt-2">Anjuna Mapusa Road, Bouta Waddo, Anjuna, Goa 403510</p>
+              <p className="text-xs text-coffee-700">Phone: <a href="tel:+917887998957" className="underline font-bold">+91 78879 98957</a></p>
+              <div className="mt-4">
+                <a href="https://www.google.com/maps/dir/?api=1&destination=Hello+Sunshine+Anjuna+Mapusa+Road+Bouta+Waddo+Anjuna+Goa+403510" target="_blank" rel="noopener noreferrer" className="btn-gold text-xs py-2 px-6">
+                  Get Directions
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer id="contact" className="bg-coffee-950 text-white py-12 text-center text-xs">
+            <p className="font-serif text-lg font-bold">Hello Sunshine Goa</p>
+            <p className="text-stone-400 mt-1">Anjuna Mapusa Road, Bouta Waddo, Anjuna, Goa 403510</p>
+            <p className="text-stone-400 mt-4">© 2026 Hello Sunshine. All rights reserved.</p>
+            <div className="mt-2 text-stone-500">
+              <a href="../index.html" className="text-gold-500 hover:underline">Flagship Edition</a>
+            </div>
+          </footer>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('react-root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
