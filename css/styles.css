@@ -57,6 +57,32 @@
   box-sizing: border-box;
 }
 
+/* Accessibility: Accessible high-contrast focus rings (UI/UX Pro Max Priority 1) */
+:focus-visible {
+  outline: 2px solid var(--gold-rich) !important;
+  outline-offset: 3px !important;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -120px;
+  left: 1.5rem;
+  background: var(--coffee-dark);
+  color: var(--gold-rich);
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-sm);
+  z-index: 1000;
+  transition: top 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--gold-warm);
+  box-shadow: var(--shadow-card);
+}
+.skip-link:focus {
+  top: 1.5rem;
+}
+
 html {
   scroll-behavior: smooth;
   font-family: var(--font-sans);
@@ -73,6 +99,11 @@ body {
   background-color: var(--bg-cream);
   color: var(--text-main);
   line-height: 1.6;
+}
+
+/* Touch & Interaction: Minimum target size & touch manipulation (UI/UX Pro Max Priority 2) */
+button, a, input, select, textarea {
+  touch-action: manipulation;
 }
 
 /* Typography helper classes */
@@ -187,6 +218,13 @@ body {
   box-shadow: 0 14px 34px -4px rgba(197, 154, 88, 0.45);
   background: linear-gradient(135deg, #E6C387 0%, #B88B46 100%);
   color: #100A06;
+}
+
+.btn-gold:active,
+.btn-olive:active,
+.btn-outline-gold:active {
+  transform: scale(0.97) translateY(0);
+  transition-duration: 0.1s;
 }
 
 .btn-outline-gold {
@@ -316,7 +354,48 @@ body {
   z-index: 0;
 }
 
-/* Mobile Sticky Bottom Bar */
+/* Form Input Enhancements (UI/UX Pro Max Priority 8) */
+input, select, textarea {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold-rich) !important;
+  box-shadow: 0 0 0 3px rgba(222, 179, 109, 0.25) !important;
+  outline: none !important;
+}
+
+/* Toast Micro-Interaction Notification (UI/UX Pro Max Priority 2 & 7) */
+.toast-notification {
+  position: fixed;
+  bottom: 5.5rem;
+  right: 1.5rem;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(35, 24, 17, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #FAF7F0;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(222, 179, 109, 0.35);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.3);
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 90vw;
+}
+
+.toast-notification.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile Sticky Bottom Bar with Safe Area Support (UI/UX Pro Max Priority 5) */
 .mobile-bottom-bar {
   display: none;
 }
@@ -331,8 +410,25 @@ body {
     z-index: 50;
     background: rgba(250, 247, 240, 0.96);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid rgba(197, 154, 88, 0.25);
     padding: 0.65rem 1rem;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 12px));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
     box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+}
+
+/* Reduced Motion Support (UI/UX Pro Max Accessibility Priority 1 & 7) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .stamp-seal {
+    animation: none !important;
   }
 }
